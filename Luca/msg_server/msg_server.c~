@@ -1,0 +1,49 @@
+#include "header.h"
+#include <sys/types.h> /* For portability */
+#include <sys/msg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#define KEY 1234567890
+
+struct responseMsg { // Risposta server --> client
+ long mtype; // PID client
+ char data[30]; // contenuto del file richiesto
+};
+
+struct requestMsg { // Richiesta (client --> server)
+ long mtype; // inutilizzato!
+ int clientId; // ID della coda del client!
+ char pathname[30];  
+}; // F
+
+
+int main(int argc, char** argv) {
+ int serverId;
+ struct requestMsg richiesta;
+ struct responseMsg risposta;
+
+ // creazione della coda server server message queue!
+ if(serverId = msgget(KEY,IPC_CREAT)==0){
+   printf("MSGGET");
+   exit(1);
+ }
+ // lettura richieste e gestione di ciascuna !
+ // in un processo figlio separato !
+ for(;;) {
+ switch(msgrcv(serverId,&richiesta,sizeof(richiesta),0,0 )){ 
+ case -1: printf("Errore nella gestione del messaggio");
+	  break;
+ default: 
+	  switch(fork()){
+	    case -1: printf("Errore nella generazione del figlio");
+		      break;
+	    case 0:  printf("Figlio prende in carico richiesta del processo:%d", richiesta.clientId);
+		     if(msgsnd(serverId,&risposta,sizeof(risposta),IPC_NOWAIT)==-1)
+		      printf("Errore risposta richiesta");
+		      break;
+	    default:	break;
+	  }
+ }
+ }
+}
