@@ -1,4 +1,4 @@
-#include "header.h"
+//#include "header.h"
 #include <sys/types.h> /* For portability */
 #include <sys/msg.h>
 #include <sys/stat.h>
